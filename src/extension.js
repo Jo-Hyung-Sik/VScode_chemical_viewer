@@ -112,6 +112,7 @@ class ChemTableProvider {
 <div id="bar"><span id="status">Loading…</span><span id="alignTools"><input type="text" id="scaffold" placeholder="Scaffold SMILES, Enter to align" spellcheck="false"><label><input type="checkbox" id="stereo" checked> R/S labels</label><label id="alignLabel"><input type="checkbox" id="align"> Align scaffolds</label></span></div>
 <div id="main">
 <div id="tablePane"><table id="table"><thead></thead><tbody></tbody></table><div id="sentinel"></div></div>
+<div id="splitter"></div>
 <div id="structPane"><div id="grid"></div><div id="gridSentinel"></div></div>
 </div>
 <script nonce="${nonce}" src="${js}"></script>

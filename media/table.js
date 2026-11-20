@@ -44,6 +44,21 @@
     const tr = e.target.closest('tbody tr');
     if (tr) select(tr.dataset.n, tablePane);
   });
+  // Drag the divider to resize the structure pane; the width is remembered for this editor tab.
+  const splitter = document.getElementById('splitter');
+  const savedWidth = (vscode.getState() || {}).structWidth;
+  if (savedWidth) structPane.style.width = savedWidth;
+  splitter.addEventListener('pointerdown', (e) => {
+    splitter.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  splitter.addEventListener('pointermove', (e) => {
+    if (!splitter.hasPointerCapture(e.pointerId)) return;
+    const width = Math.min(Math.max(window.innerWidth - e.clientX, 120), window.innerWidth - 120);
+    structPane.style.width = `${width}px`;
+  });
+  splitter.addEventListener('pointerup', () => vscode.setState({ structWidth: structPane.style.width }));
+
   grid.addEventListener('click', (e) => {
     const card = e.target.closest('.card');
     if (card) select(card.dataset.n, structPane);
@@ -142,6 +157,7 @@
       grid.textContent = '';
       structCol = columns.findIndex((c) => c.type === 'structure');
       structPane.hidden = structCol < 0;
+      splitter.hidden = structCol < 0;
       document.getElementById('alignTools').hidden = structCol < 0;
       renderHeader();
       updateStatus();

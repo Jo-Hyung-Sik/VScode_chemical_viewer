@@ -123,10 +123,26 @@ tbody tr:hover {
   overflow: auto;
 }
 
+#splitter {
+  flex: none;
+  width: 5px;
+  cursor: col-resize;
+  background: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+#splitter:hover,
+#splitter:active {
+  background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder));
+}
+
+#splitter[hidden] {
+  display: none;
+}
+
 #structPane {
+  flex: none;
   width: 40%;
   overflow-y: auto;
-  border-left: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
 }
 
 #structPane[hidden] {
