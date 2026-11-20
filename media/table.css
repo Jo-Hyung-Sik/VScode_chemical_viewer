@@ -1,0 +1,168 @@
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--vscode-editor-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+#bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 4px 10px;
+  border-right: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  text-align: left;
+  vertical-align: middle;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--vscode-editorGroupHeader-tabsBackground, var(--vscode-editor-background));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+th.sortable {
+  cursor: pointer;
+}
+
+th[data-sort='asc']::after {
+  content: ' ▲';
+}
+
+th[data-sort='desc']::after {
+  content: ' ▼';
+}
+
+td.rownum {
+  color: var(--vscode-descriptionForeground);
+  text-align: right;
+}
+
+td.structure {
+  padding: 2px;
+  text-align: center;
+  min-width: 160px;
+}
+
+td.structure svg {
+  display: block;
+}
+
+tbody tr:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+#alignTools label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+#alignTools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#alignTools[hidden] {
+  display: none;
+}
+
+#scaffold {
+  width: 260px;
+  padding: 2px 6px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, rgba(128, 128, 128, 0.35));
+  font-family: var(--vscode-editor-font-family);
+}
+
+#scaffold.invalid {
+  border-color: var(--vscode-inputValidation-errorBorder, #be1100);
+  outline: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
+}
+
+#sentinel,
+#gridSentinel {
+  height: 1px;
+}
+
+#main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+#tablePane {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+#structPane {
+  width: 40%;
+  overflow-y: auto;
+  border-left: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+#structPane[hidden] {
+  display: none;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+
+.card {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+  border-right: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+.card span {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.card:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+tbody tr.selected,
+.card.selected {
+  background: var(--vscode-list-inactiveSelectionBackground);
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}

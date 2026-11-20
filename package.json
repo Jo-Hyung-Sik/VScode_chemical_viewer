@@ -1,0 +1,88 @@
+{
+  "name": "vscode-chemical-viewer",
+  "displayName": "Chemical Viewer",
+  "description": "Open .csv, .sdf and .mol2 files as a table with 2D compound structures.",
+  "version": "0.6.1",
+  "publisher": "Jo-Hyung-Sik",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jo-Hyung-Sik/VScode_chemical_viewer.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Visualization",
+    "Data Science"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "chemicalViewer.table",
+        "displayName": "Chemical Structure Table",
+        "selector": [
+          {
+            "filenamePattern": "*.sdf"
+          },
+          {
+            "filenamePattern": "*.sd"
+          },
+          {
+            "filenamePattern": "*.mol2"
+          },
+          {
+            "filenamePattern": "*.csv"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "chemicalViewer.openTable",
+        "title": "Open as Chemical Structure Table"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "chemicalViewer.openTable",
+          "when": "resourceExtname =~ /^\\.(csv|sdf|sd|mol2)$/i",
+          "group": "navigation@90"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "chemicalViewer.openTable",
+          "when": "resourceExtname =~ /^\\.(csv|sdf|sd|mol2)$/i",
+          "group": "navigation@90"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "chemicalViewer.openTable",
+          "when": "resourceExtname =~ /^\\.(csv|sdf|sd|mol2)$/i"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.js --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
+    "test": "node --test test/",
+    "vscode:prepublish": "npm run build -- --minify",
+    "package": "vsce package --no-dependencies --skip-license"
+  },
+  "dependencies": {
+    "openchemlib": "9.26.0"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^4.1.1",
+    "esbuild": "^0.28.2"
+  },
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ]
+}

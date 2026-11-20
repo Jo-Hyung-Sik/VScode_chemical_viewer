@@ -1,0 +1,6 @@
+Name,SMILES,MW,Note
+Aspirin,CC(=O)Oc1ccccc1C(=O)O,180.16,"analgesic, antipyretic"
+Caffeine,Cn1cnc2c1c(=O)n(C)c(=O)n2C,194.19,stimulant
+Ibuprofen,CC(C)Cc1ccc(cc1)C(C)C(=O)O,206.28,NSAID
+Broken,not_a_smiles(,0,invalid structure
+Empty,,,
