@@ -1,7 +1,7 @@
 'use strict';
 const vscode = require('vscode');
 const path = require('path');
-const { parseFile, renderSvg, makeScaffoldTemplate, STRUCTURE } = require('./parsers');
+const { parseFile, serialize, renderSvg, makeScaffoldTemplate, STRUCTURE } = require('./parsers');
 
 const PAGE_SIZE = 100;
 const SVG_WIDTH = 160;
@@ -26,11 +26,18 @@ class ChemTableProvider {
     let align = false;
     let stereo = true; // show R/S labels
     let template = null; // user-supplied scaffold, used only while align is on
+    let deleted = new Set(); // row indices removed in this editor
+    let dirty = false; // edits exist that the file on disk does not have
+
+    const svgOf = (cell) =>
+      cell ? renderSvg(cell, SVG_WIDTH, SVG_HEIGHT, { align, template: align && template, stereo }) : '';
 
     const load = async () => {
       const bytes = await vscode.workspace.fs.readFile(document.uri);
       table = parseFile(document.uri.path, new TextDecoder('utf-8').decode(bytes));
       order = table.rows.map((_, i) => i);
+      deleted = new Set();
+      dirty = false;
       panel.webview.postMessage({
         type: 'init',
         fileName: path.basename(document.uri.path),
@@ -43,16 +50,14 @@ class ChemTableProvider {
       const rows = order.slice(offset, offset + PAGE_SIZE).map((rowIndex) => ({
         n: rowIndex + 1,
         cells: table.rows[rowIndex].map((cell, c) =>
-          table.columns[c].type === STRUCTURE
-            ? { svg: cell ? renderSvg(cell, SVG_WIDTH, SVG_HEIGHT, { align, template: align && template, stereo }) : '' }
-            : cell,
+          table.columns[c].type === STRUCTURE ? { svg: svgOf(cell) } : cell,
         ),
       }));
       panel.webview.postMessage({ type: 'rows', offset, rows });
     };
 
     const sort = (column, direction) => {
-      order = table.rows.map((_, i) => i);
+      order = table.rows.map((_, i) => i).filter((i) => !deleted.has(i));
       if (direction) {
         const numeric = table.rows.every((r) => r[column] === '' || !isNaN(Number(r[column])));
         order.sort((a, b) => {
@@ -83,17 +88,47 @@ class ChemTableProvider {
         } else if (msg.type === 'sort') {
           sort(msg.column, msg.direction);
           sendPage(0);
+        } else if (msg.type === 'edit') {
+          const row = table.rows[msg.n - 1];
+          const column = table.columns[msg.column];
+          if (!row || !column || column.type === STRUCTURE || column.readOnly) return;
+          row[msg.column] = String(msg.value);
+          dirty = true;
+          // In a CSV the structure column is drawn from the SMILES column right after it.
+          const s = msg.column - 1;
+          if (table.format === 'csv' && s >= 0 && table.columns[s].type === STRUCTURE) {
+            const smiles = row[msg.column].trim();
+            row[s] = smiles ? { smiles } : null;
+            panel.webview.postMessage({ type: 'svg', n: msg.n, column: s, svg: svgOf(row[s]) });
+          }
+        } else if (msg.type === 'delete') {
+          if (!table.rows[msg.n - 1]) return;
+          deleted.add(msg.n - 1);
+          order = order.filter((i) => i !== msg.n - 1);
+          dirty = true;
+        } else if (msg.type === 'save') {
+          const ext = path.extname(document.uri.path);
+          const base = path.basename(document.uri.path, ext);
+          const target = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.joinPath(document.uri, '..', `${base}_edited${ext}`),
+          });
+          if (!target) return;
+          const text = serialize(table, table.rows.filter((_, i) => !deleted.has(i)));
+          await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(text));
+          panel.webview.postMessage({ type: 'saved', name: path.basename(target.path) });
         }
       } catch (err) {
         panel.webview.postMessage({ type: 'error', message: String(err && err.message ? err.message : err) });
       }
     });
 
-    // Reload when the file changes on disk.
+    // Reload when the file changes on disk, unless that would throw away edits made here.
     const watcher = vscode.workspace.createFileSystemWatcher(
       new vscode.RelativePattern(vscode.Uri.joinPath(document.uri, '..'), path.basename(document.uri.path)),
     );
-    watcher.onDidChange(() => load().catch(() => {}));
+    watcher.onDidChange(() => {
+      if (!dirty) load().catch(() => {});
+    });
     panel.onDidDispose(() => watcher.dispose());
   }
 
@@ -109,7 +144,7 @@ class ChemTableProvider {
 <link rel="stylesheet" href="${css}">
 </head>
 <body>
-<div id="bar"><span id="status">Loading…</span><span id="alignTools"><input type="text" id="scaffold" placeholder="Scaffold SMILES, Enter to align" spellcheck="false"><label><input type="checkbox" id="stereo" checked> R/S labels</label><label id="alignLabel"><input type="checkbox" id="align"> Align scaffolds</label></span></div>
+<div id="bar"><span id="status">Loading…</span><span id="tools"><span id="alignTools"><label id="structLabel">Structure <select id="structCol"></select></label><label>Label <select id="labelCol"></select></label><details id="fieldsBox"><summary>Fields</summary><div id="fieldList"></div></details><input type="text" id="scaffold" placeholder="Scaffold SMILES, Enter to align" spellcheck="false"><label><input type="checkbox" id="stereo" checked> R/S labels</label><label id="alignLabel"><input type="checkbox" id="align"> Align scaffolds</label></span><button id="deleteRow" disabled>Delete rows</button><button id="saveAs">Save As…</button></span></div>
 <div id="main">
 <div id="tablePane"><table id="table"><thead></thead><tbody></tbody></table><div id="sentinel"></div></div>
 <div id="splitter"></div>

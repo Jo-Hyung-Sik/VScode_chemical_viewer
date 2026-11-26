@@ -81,8 +81,9 @@ function looksLikeSmilesColumn(values) {
 
 function parseCsv(text) {
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
-  const records = parseDelimited(text, detectDelimiter(text));
-  if (!records.length) return { columns: [], rows: [] };
+  const delimiter = detectDelimiter(text);
+  const records = parseDelimited(text, delimiter);
+  if (!records.length) return { format: 'csv', delimiter, columns: [], rows: [] };
   const header = records[0].map((h, i) => h.trim() || `Column ${i + 1}`);
   const body = records.slice(1);
 
@@ -106,7 +107,7 @@ function parseCsv(text) {
     });
     return cells;
   });
-  return { columns, rows };
+  return { format: 'csv', delimiter, columns, rows };
 }
 
 // ---------- SD file ----------
@@ -144,7 +145,7 @@ function parseSdf(text) {
     for (const f of fieldNames) cells.push(r.fields[f] || '');
     return cells;
   });
-  return { columns, rows };
+  return { format: 'sdf', nameColumn: hasName ? 1 : -1, columns, rows };
 }
 
 // ---------- Tripos MOL2 ----------
@@ -159,11 +160,12 @@ function parseMol2(text) {
     rows.push([{ mol2: block }, name, counts[0] || '', counts[1] || '']);
   }
   return {
+    format: 'mol2',
     columns: [
       { name: 'Structure', type: STRUCTURE },
       { name: 'Molecule Name', type: TEXT },
-      { name: 'Atoms', type: TEXT },
-      { name: 'Bonds', type: TEXT },
+      { name: 'Atoms', type: TEXT, readOnly: true }, // derived from the block, not stored as data
+      { name: 'Bonds', type: TEXT, readOnly: true },
     ],
     rows,
   };
@@ -317,4 +319,37 @@ function parseFile(fileName, text) {
   return parseCsv(text);
 }
 
-module.exports = { parseFile, parseCsv, parseSdf, parseMol2, renderSvg, toMolecule, makeScaffoldTemplate, STRUCTURE };
+// ---------- writing ----------
+
+const EMPTY_MOLFILE = '\n\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
+
+/** Turns a parsed (and possibly edited) table back into file text in its original format. */
+function serialize(table, rows = table.rows) {
+  const { columns } = table;
+  if (table.format === 'sdf') {
+    return rows
+      .map((r) => {
+        let out = r[0] ? r[0].molfile : EMPTY_MOLFILE;
+        if (table.nameColumn >= 0) out = out.replace(/^[^\n]*/, () => r[table.nameColumn].replace(/\s*[\r\n]+\s*/g, ' '));
+        for (let c = table.nameColumn >= 0 ? 2 : 1; c < columns.length; c++) {
+          // a blank line ends an SD data item, so none may survive inside a value
+          const value = r[c].replace(/\r/g, '').replace(/\n\s*\n/g, '\n').trim();
+          if (value) out += `>  <${columns[c].name}>\n${value}\n\n`;
+        }
+        return out + '$$$$\n';
+      })
+      .join('');
+  }
+  if (table.format === 'mol2') {
+    return rows
+      .map((r) => r[0].mol2.replace(/^(@<TRIPOS>MOLECULE\r?\n)[^\r\n]*/, (_, head) => head + r[1].replace(/[\r\n]+/g, ' ')))
+      .join('');
+  }
+  const keep = columns.map((_, c) => c).filter((c) => columns[c].type !== STRUCTURE);
+  const quote = (v) => (/["\r\n]/.test(v) || v.includes(table.delimiter) ? `"${v.replace(/"/g, '""')}"` : v);
+  return [keep.map((c) => columns[c].name), ...rows.map((r) => keep.map((c) => r[c]))]
+    .map((line) => line.map(quote).join(table.delimiter) + '\n')
+    .join('');
+}
+
+module.exports = { serialize, parseFile, parseCsv, parseSdf, parseMol2, renderSvg, toMolecule, makeScaffoldTemplate, STRUCTURE };

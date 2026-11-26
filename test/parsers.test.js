@@ -89,3 +89,33 @@ test('stereo: R/S labels are drawn by default and can be hidden', () => {
   const hidden = renderSvg(alanine, 160, 110, { stereo: false });
   assert.ok(!/>S</.test(hidden) && !/>abs</.test(hidden));
 });
+
+test('serialize: every sample survives parse -> serialize -> parse, and edits are written', () => {
+  const { serialize } = require('../src/parsers');
+  for (const name of ['compounds.csv', 'semicolon_no_smiles_header.csv', 'compounds.sdf', 'benzene_ethanol.mol2']) {
+    const t = load(name);
+    assert.deepStrictEqual(parseFile(name, serialize(t)), t, name);
+  }
+  const csv = load('compounds.csv');
+  csv.rows[0][0] = 'Aspirin, "ASA"\nline2';
+  const back = parseFile('x.csv', serialize(csv, csv.rows.slice(0, 2)));
+  assert.strictEqual(back.rows.length, 2);
+  assert.strictEqual(back.rows[0][0], 'Aspirin, "ASA"\nline2');
+
+  const sdf = load('compounds.sdf');
+  sdf.rows[0][1] = 'Renamed';
+  sdf.rows[0][2] = '1\n\n2';
+  const sdfBack = parseFile('x.sdf', serialize(sdf));
+  assert.deepStrictEqual(sdfBack.rows[0].slice(1, 3), ['Renamed', '1\n2']);
+  assert.strictEqual(sdfBack.rows.length, 3);
+
+  const mol2 = load('benzene_ethanol.mol2');
+  mol2.rows[1][1] = 'EtOH';
+  assert.strictEqual(parseFile('x.mol2', serialize(mol2, [mol2.rows[1]])).rows[0][1], 'EtOH');
+});
+
+test('csv: every SMILES column gets its own structure column', () => {
+  const t = parseFile('x.csv', 'id,smiles,product_smiles\n1,CCO,CC=O\n2,c1ccccc1,Oc1ccccc1\n');
+  assert.deepEqual(t.columns.map((c) => c.name), ['id', 'Structure of smiles', 'smiles', 'Structure of product_smiles', 'product_smiles']);
+  assert.deepEqual(t.rows[0][3], { smiles: 'CC=O' });
+});
