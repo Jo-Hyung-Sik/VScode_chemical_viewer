@@ -8,9 +8,33 @@ A VS Code extension that opens `.csv`, `.sdf` and `.mol2` files as a table with 
 
 Right-click a file in the Explorer (or its editor tab) and choose **Open as Chemical Structure Table**. Clicking a file still opens it in its usual editor, so this extension does not take over files handled by other viewers.
 
-The table is on the left; a structure pane on the right shows all structures as a grid. Each structure there is captioned with a name or ID column, picked automatically; change it with the **Label** dropdown. Drag the divider between them to resize. Click a row or a structure to highlight it in both. Tick **Align scaffolds** to redraw every structure so that molecules sharing a scaffold (rings plus linkers) show it in the same position and orientation. To choose the scaffold yourself, type its SMILES into the box next to the checkbox and press Enter: this ticks the checkbox and aligns every molecule containing it on that scaffold, while the rest keep the automatic alignment. Untick the checkbox to see the original drawings again. Stereo centres are labelled R/S; untick **R/S labels** to hide them (wedge bonds stay). Click a column header to sort; drag a header's right edge to resize the column (double-click the edge to reset).
+## Using the viewer
 
-**Editing.** Double-click a text cell to change it (Enter commits, Escape cancels); editing a SMILES cell redraws its structure. Select a row and press **Delete row** to remove it. **Save As…** writes the edited table to a new file in the same format; the file you opened is never modified. Rows load as you scroll.
+The table is on the left; a structure pane on the right shows all structures as a grid. Drag the divider between them to resize. Rows load as you scroll.
+
+**Table**
+
+- Click a column header to sort.
+- Drag a header's right edge to resize the column; double-click the edge to reset it.
+- Click a row or a structure to highlight it in both panes. Cmd/Ctrl-click adds or removes a row; Shift-click selects the range from the last clicked row.
+
+**Structure pane**
+
+- **Label** — the column shown above each structure. A name or ID column is picked automatically; rows without a value show the row number.
+- **Fields** — tick any columns to list them under each structure as `column: value` lines.
+- **Structure** — appears when a CSV has several SMILES columns; chooses which one the pane draws. The table always shows a structure column for each.
+
+**Drawing**
+
+- **Align scaffolds** — redraws every structure so that molecules sharing a scaffold (rings plus linkers) show it in the same position and orientation. Untick to see the original drawings again.
+- **Scaffold SMILES** — type a scaffold and press Enter to align on it instead. This ticks **Align scaffolds**; molecules that do not contain the scaffold keep the automatic alignment.
+- **R/S labels** — stereo centres are labelled R/S; untick to hide the labels (wedge bonds stay).
+
+**Editing**
+
+- Double-click a text cell to change it (Enter commits, Escape cancels). Editing a SMILES cell redraws its structure.
+- **Delete rows** removes the selected rows.
+- **Save As…** writes the edited table to a new file in the same format. The file you opened is never modified.
 
 Structures are parsed and drawn with [OpenChemLib](https://github.com/cheminfo/openchemlib-js) (BSD-3-Clause), the open-source chemistry library that DataWarrior is built on.
 
