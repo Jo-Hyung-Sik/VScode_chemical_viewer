@@ -2,7 +2,7 @@
   "name": "vscode-chemical-viewer",
   "displayName": "Chemical Viewer",
   "description": "Open .csv, .sdf and .mol2 files as a table with 2D compound structures.",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "publisher": "Jo-Hyung-Sik",
   "repository": {
     "type": "git",

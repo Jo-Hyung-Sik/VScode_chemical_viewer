@@ -191,7 +191,7 @@ function mol2ToMolecule(block) {
       const a = mol.addAtom(atomicNo);
       mol.setAtomX(a, Number(p[2]));
       mol.setAtomY(a, -Number(p[3]));
-      mol.setAtomZ(a, Number(p[4]));
+      mol.setAtomZ(a, -Number(p[4])); // y and z both flipped, as OCL's molfile parser does; flipping only y mirrors the molecule
       if (type === 'N.4') mol.setAtomCharge(a, 1);
       atomIndex.set(p[0], a);
     } else if (section === 'BOND' && p.length >= 4) {

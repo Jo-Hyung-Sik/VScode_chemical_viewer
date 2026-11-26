@@ -119,3 +119,12 @@ test('csv: every SMILES column gets its own structure column', () => {
   assert.deepEqual(t.columns.map((c) => c.name), ['id', 'Structure of smiles', 'smiles', 'Structure of product_smiles', 'product_smiles']);
   assert.deepEqual(t.rows[0][3], { smiles: 'CC=O' });
 });
+
+test('mol2: 3D stereo centres keep their handedness', () => {
+  const { toMolecule } = require('../src/parsers');
+  const t = load('test_set.mol2');
+  const idcode = (name) => toMolecule(t.rows.find((r) => r[1] === name)[0]).getIDCode();
+  const fromSmiles = (s) => parseFile('x.csv', `smiles\n${s}\n`).rows.map((r) => toMolecule(r[0]).getIDCode())[0];
+  assert.equal(idcode('(S)-ibuprofen'), fromSmiles('CC(C)Cc1ccc(cc1)[C@H](C)C(O)=O'));
+  assert.equal(idcode('(R)-ibuprofen'), fromSmiles('CC(C)Cc1ccc(cc1)[C@@H](C)C(O)=O'));
+});
